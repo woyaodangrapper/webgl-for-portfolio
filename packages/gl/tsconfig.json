@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../config/src/tamagui.config.ts",
+    "src/scope/shaders/edgeStage/createEdgeStage.js",
+    "../domain/src/components/mode.tsx"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "module": "esnext",
+    "target": "esnext",
+    "jsx": "react-jsx"
+  },
+  "references": []
+}

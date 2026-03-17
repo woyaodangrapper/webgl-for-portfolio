@@ -1,0 +1,10 @@
+services:
+  webgl:
+    image: nmolirsch/woyaodangrapper:latest
+    container_name: webgl
+    restart: unless-stopped
+    ports:
+      - "8151:8151"
+    environment:
+      - NODE_ENV=production
+      - PORT=8151

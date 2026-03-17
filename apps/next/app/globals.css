@@ -1,0 +1,34 @@
+/* 丁达尔效应背景层 */
+.bg-tyndall {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 渐变光斑 */
+.bg-tyndall::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 500px at 15% 20%, rgba(120, 50, 80, 0.35) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at 85% 15%, rgba(140, 40, 60, 0.3) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 350px at 90% 75%, rgba(100, 30, 50, 0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 350px 300px at 50% 50%, rgba(30, 60, 120, 0.2) 0%, transparent 70%),
+    radial-gradient(ellipse 300px 250px at 10% 80%, rgba(80, 40, 100, 0.2) 0%, transparent 70%);
+  filter: blur(40px);
+}
+
+/* 点状网格 */
+.bg-dot-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(circle 1px, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(transparent, rgb(0, 0, 0), transparent);
+  -webkit-mask-image: linear-gradient(transparent, rgb(0, 0, 0), transparent);
+}

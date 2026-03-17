@@ -1,0 +1,63 @@
+.circle {
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff00;
+}
+.pie_left,
+.pie_right {
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.left,
+.right {
+  display: block;
+  width: 32px;
+  height: 32px;
+  background: #ffffff75;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  backdrop-filter: blur(1px);
+}
+.pie_right,
+.right {
+  clip: rect(0, auto, auto, 100px);
+}
+.pie_left,
+.left {
+  clip: rect(0, 100px, auto, 0);
+}
+
+.mask {
+  -webkit-user-select: none; /* Chrome, Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none; /* 标准写法 */
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  left: 4px;
+  top: 4px;
+  background: #33333363;
+  position: absolute;
+  text-align: center;
+  line-height: 24px;
+  font-size: 16px;
+}
+.mask span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 21px;
+  color: #fff;
+}
+.mask:hover {
+  background-color: #00000075;
+}

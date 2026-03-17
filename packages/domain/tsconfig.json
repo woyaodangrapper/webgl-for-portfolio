@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../config/src/tamagui.config.ts",
+    "../gl/src/components/mode.tsx",
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "esnext",
+    "jsx": "react-jsx"
+  },
+  "references": []
+}

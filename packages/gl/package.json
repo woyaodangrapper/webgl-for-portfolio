@@ -1,0 +1,45 @@
+{
+  "name": "@my/gl",
+  "version": "0.0.1",
+  "sideEffects": [
+    "*.css"
+  ],
+  "private": true,
+  "types": "./src",
+  "main": "src/index.tsx",
+  "module:jsx": "src",
+  "exports": {
+    ".": "./src/index.tsx",
+    "./gis": "./src/gis.tsx",
+    "./3ds": "./src/3ds.tsx",
+    "./types": "./src/types/index.ts"
+  },
+  "files": [
+    "types",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tamagui-build --skip-types",
+    "watch": "tamagui-build --skip-types --watch"
+  },
+  "dependencies": {
+    "@react-three/cannon": "^6.6.0",
+    "@react-three/drei": "^10.6.0",
+    "@react-three/fiber": "^9.2.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "@tamagui/toast": "2.0.0-rc.16",
+    "cesium": "^1.131.0",
+    "postprocessing": "^6.37.6",
+    "realism-effects": "^1.1.2",
+    "rxjs": "^7.8.2",
+    "tamagui": "2.0.0-rc.16",
+    "three": "^0.178.0",
+    "three-stdlib": "^2.36.0"
+  },
+  "devDependencies": {
+    "@tamagui/build": "2.0.0-rc.16",
+    "@types/fs-extra": "^11.0.4",
+    "@types/three": "^0.178.1",
+    "lil-gui": "^0.20.0"
+  }
+}

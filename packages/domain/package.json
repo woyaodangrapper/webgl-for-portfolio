@@ -1,0 +1,28 @@
+{
+  "name": "@my/domain",
+  "version": "0.0.1",
+  "sideEffects": [
+    "*.css"
+  ],
+  "private": true,
+  "types": "./src",
+  "main": "src/index.tsx",
+  "module:jsx": "src",
+  "files": [
+    "types",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tamagui-build --skip-types",
+    "watch": "tamagui-build --skip-types --watch"
+  },
+  "dependencies": {
+    "@my/gl": "workspace:*",
+    "@react-three/fiber": "^9.2.0",
+    "@tamagui/toast": "2.0.0-rc.16",
+    "tamagui": "2.0.0-rc.16"
+  },
+  "devDependencies": {
+    "@tamagui/build": "2.0.0-rc.16"
+  }
+}

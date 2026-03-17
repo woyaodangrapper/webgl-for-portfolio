@@ -1,0 +1,45 @@
+# 版本控制
+.git
+.gitignore
+
+# 编辑器
+.vscode
+.idea
+*.swp
+
+# 依赖（由 Docker 内部安装）
+node_modules
+**/node_modules
+
+# 构建产物（只排除顶层和 apps 下的，保留 packages 源码中的 build 目录）
+.next
+apps/**/.next
+apps/**/dist
+apps/**/build
+
+# 测试
+**/__tests__
+**/e2e
+**/*.test.*
+**/*.spec.*
+playwright-report
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Expo（不需要）
+apps/expo
+
+# turbo cache
+.turbo
