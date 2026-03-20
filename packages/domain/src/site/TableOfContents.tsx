@@ -201,17 +201,21 @@ export const TableOfContents = ({
       >
         <StyledButton
           color="#44cf8c"
-          icon={<BentoIcon scale={0.75} />}
-          onClick={() => window.open('/bento', '_blank')}
+          icon={<BentoIcon scale={0.75} color="#44cf8c" />}
+          onClick={() => {
+            window.location.href = '/gis'
+          }}
         >
-          CesiumJS 渲染
+          C
         </StyledButton>
         <StyledButton
           color="#ef4444"
           icon={<TakeoutIcon scale={0.75} />}
-          onClick={() => window.open('/takeout', '_blank')}
+          onClick={() => {
+            window.location.href = '/'
+          }}
         >
-          ThreeJS 渲染
+          T
         </StyledButton>
       </div>
     </>

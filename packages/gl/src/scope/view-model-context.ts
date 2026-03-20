@@ -68,7 +68,8 @@ export async function cacheModels(
   urls: string | string[],
   scale: number = 1.0,
   position?: { x?: number; y?: number; z?: number },
-  type?: LoaderType
+  type?: LoaderType,
+  onProgress?: (loaded: number, total: number) => void
 ): Promise<Object3D[]> {
   if (!urls || (Array.isArray(urls) && urls.length === 0)) return []
 
@@ -79,8 +80,37 @@ export async function cacheModels(
   const z = position?.z ?? 0.5
 
   const urlList = typeof urls === 'string' ? [urls] : urls
+  const perModel: { loaded: number; total: number }[] = urlList.map(() => ({ loaded: 0, total: 0 }))
 
-  const models = await Promise.all(urlList.map(async (url) => await loader.loadAsync(url)))
+  const report = () => {
+    const sumLoaded = perModel.reduce((s, m) => s + m.loaded, 0)
+    const sumTotal = perModel.reduce((s, m) => s + m.total, 0)
+    onProgress?.(sumLoaded, sumTotal)
+  }
+
+  const models = await Promise.all(
+    urlList.map(
+      (url, i) =>
+        new Promise<GLTF | Object3D>((resolve, reject) => {
+          loader.load(
+            url,
+            (result) => {
+              perModel[i].loaded = perModel[i].total || perModel[i].loaded
+              report()
+              resolve(result)
+            },
+            (event) => {
+              if (event.lengthComputable) {
+                perModel[i].loaded = event.loaded
+                perModel[i].total = event.total
+              }
+              report()
+            },
+            (err) => reject(err)
+          )
+        })
+    )
+  )
   const matrix = createModelMatrix(
     models.map((m) => ('scene' in m ? m.scene : m)),
     x,

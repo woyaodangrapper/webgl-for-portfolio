@@ -336,7 +336,8 @@ export function getLightUniforms(
 export function createMaterialShader(
   uniforms: Record<string, { value: any }>,
   vertexShader: string,
-  fragmentShader: string
+  fragmentShader: string,
+  options?: {}
 ): ShaderMaterial {
   return new ShaderMaterial({
     uniforms,
@@ -346,6 +347,7 @@ export function createMaterialShader(
     // side: DoubleSide,
     // depthTest: true,
     // blending: NormalBlending,
+    ...options,
   })
 }
 

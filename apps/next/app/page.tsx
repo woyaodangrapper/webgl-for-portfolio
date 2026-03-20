@@ -9,11 +9,19 @@
 import { Effect, View3D } from '@my/gl/3ds'
 import { effects$, HvacModels, ModelOutline, TableOfContents } from '@my/domain'
 import { Context } from '@my/gl/types'
-import { useEffect, useState } from 'react'
-
+import { useCallback, useEffect, useState } from 'react'
+import LoadingPage, { type LoadingPageProps } from './loading'
+import type { LoadProgress } from '@my/domain'
 export default function Page() {
   const [viewer, setViewer] = useState<Partial<Context> | Context | null>(null)
   const [effects, setEffects] = useState<Effect[]>([])
+  const [loadProgress, setLoadProgress] = useState<LoadProgress>({ loaded: 0, total: 0 })
+  const [done, setDone] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleLoaded = (viewer: Partial<Context> | Context) => {
     if (!viewer || !viewer.scene || !viewer.camera || !viewer.renderer) {
@@ -26,6 +34,13 @@ export default function Page() {
     setViewer(viewer)
     console.log('Viewer loaded successfully')
   }
+
+  const handleProgress = useCallback((p: LoadProgress) => {
+    setLoadProgress(p)
+    if (p.total > 0 && p.loaded >= p.total) {
+      setTimeout(() => setDone(true), 400)
+    }
+  }, [])
 
   useEffect(() => {
     const sub = effects$.subscribe(setEffects)
@@ -49,8 +64,23 @@ export default function Page() {
 
   return (
     <>
+      {mounted && !done && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999,
+            transition: 'opacity 0.4s ease',
+            opacity: loadProgress.total > 0 && loadProgress.loaded >= loadProgress.total ? 0 : 1,
+            pointerEvents:
+              loadProgress.total > 0 && loadProgress.loaded >= loadProgress.total ? 'none' : 'auto',
+          }}
+        >
+          <LoadingPage loaded={loadProgress.loaded} total={loadProgress.total} />
+        </div>
+      )}
       <View3D onLoaded={handleLoaded} effects={effects}>
-        <>{viewer && <HvacModels viewer={viewer} />}</>
+        <>{viewer && <HvacModels viewer={viewer} onProgress={handleProgress} />}</>
       </View3D>
       <TableOfContents headings={tocHeadings} />
     </>

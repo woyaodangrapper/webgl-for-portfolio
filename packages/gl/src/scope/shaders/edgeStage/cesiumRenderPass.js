@@ -1,29 +1,36 @@
-import * as Cesium from 'cesium';
+import * as Cesium from 'cesium'
 
 function executeDerivedCommand(command, nameDerived, commandName, scene, context, passState) {
-  const defined = Cesium.defined;
-  var frameState = scene._frameState;
-  var derivedCommands = command.derivedCommands;
+  const defined = Cesium.defined
+  var frameState = scene._frameState
+  var derivedCommands = command.derivedCommands
   if (!defined(derivedCommands)) {
-    return;
+    return
   }
 
   if (frameState.useLogDepth && defined(derivedCommands.logDepth)) {
-    command = derivedCommands.logDepth.command;
+    command = derivedCommands.logDepth.command
   }
 
-  derivedCommands = command.derivedCommands;
+  derivedCommands = command.derivedCommands
   if (defined(derivedCommands[nameDerived])) {
-    command = derivedCommands[nameDerived][commandName];
-    command.execute(context, passState);
+    command = derivedCommands[nameDerived][commandName]
+    command.execute(context, passState)
   }
 }
 var scratchPerspectiveFrustum,
   scratchPerspectiveOffCenterFrustum,
   scratchOrthographicFrustum,
   scratchOrthographicOffCenterFrustum,
-  clearCommand;
-export function executeDerivedCommandList(context, targetFramebuffer, passState, nameDerived, commandName, filter) {
+  clearCommand
+export function executeDerivedCommandList(
+  context,
+  targetFramebuffer,
+  passState,
+  nameDerived,
+  commandName,
+  filter
+) {
   const {
     Pass,
     defined,
@@ -31,12 +38,14 @@ export function executeDerivedCommandList(context, targetFramebuffer, passState,
     PerspectiveOffCenterFrustum,
     OrthographicFrustum,
     OrthographicOffCenterFrustum,
-  } = Cesium;
+  } = Cesium
 
-  scratchPerspectiveFrustum = scratchPerspectiveFrustum || new PerspectiveFrustum();
-  scratchPerspectiveOffCenterFrustum = scratchPerspectiveOffCenterFrustum || new PerspectiveOffCenterFrustum();
-  scratchOrthographicFrustum = scratchOrthographicFrustum || new OrthographicFrustum();
-  scratchOrthographicOffCenterFrustum = scratchOrthographicOffCenterFrustum || new OrthographicOffCenterFrustum();
+  scratchPerspectiveFrustum = scratchPerspectiveFrustum || new PerspectiveFrustum()
+  scratchPerspectiveOffCenterFrustum =
+    scratchPerspectiveOffCenterFrustum || new PerspectiveOffCenterFrustum()
+  scratchOrthographicFrustum = scratchOrthographicFrustum || new OrthographicFrustum()
+  scratchOrthographicOffCenterFrustum =
+    scratchOrthographicOffCenterFrustum || new OrthographicOffCenterFrustum()
 
   let us = context._us,
     /**
@@ -52,21 +61,21 @@ export function executeDerivedCommandList(context, targetFramebuffer, passState,
     scene = camera._scene,
     view = scene._view,
     frustumCommandsList = view.frustumCommandsList,
-    numFrustums = frustumCommandsList.length;
+    numFrustums = frustumCommandsList.length
 
-  var globeTranslucencyState = scene._globeTranslucencyState;
-  var globeTranslucent = globeTranslucencyState.translucent;
+  var globeTranslucencyState = scene._globeTranslucencyState
+  var globeTranslucent = globeTranslucencyState.translucent
 
   // Create a working frustum from the original camera frustum.
-  var frustum;
+  var frustum
   if (defined(camera.frustum.fov)) {
-    frustum = camera.frustum.clone(scratchPerspectiveFrustum);
+    frustum = camera.frustum.clone(scratchPerspectiveFrustum)
   } else if (defined(camera.frustum.infiniteProjectionMatrix)) {
-    frustum = camera.frustum.clone(scratchPerspectiveOffCenterFrustum);
+    frustum = camera.frustum.clone(scratchPerspectiveOffCenterFrustum)
   } else if (defined(camera.frustum.width)) {
-    frustum = camera.frustum.clone(scratchOrthographicFrustum);
+    frustum = camera.frustum.clone(scratchOrthographicFrustum)
   } else {
-    frustum = camera.frustum.clone(scratchOrthographicOffCenterFrustum);
+    frustum = camera.frustum.clone(scratchOrthographicOffCenterFrustum)
   }
 
   /**
@@ -78,32 +87,33 @@ export function executeDerivedCommandList(context, targetFramebuffer, passState,
    * @private
    */
   function executeCommand(command, scene, context, passState) {
-    let show = filter ? filter(command, scene) : true;
+    let show = filter ? filter(command, scene) : true
     if (show) {
       if (nameDerived && commandName) {
-        executeDerivedCommand(command, nameDerived, commandName, scene, context, passState);
+        executeDerivedCommand(command, nameDerived, commandName, scene, context, passState)
       } else {
-        command.execute(context, passState);
+        command.execute(context, passState)
       }
     }
   }
 
-  var j, length, commands;
+  var j, length, commands
   for (var i = 0; i < numFrustums; ++i) {
-    var index = numFrustums - i - 1;
-    var frustumCommands = frustumCommandsList[index];
+    var index = numFrustums - i - 1
+    var frustumCommands = frustumCommandsList[index]
 
-    var originalFramebuffer = passState.framebuffer;
-    passState.framebuffer = targetFramebuffer;
+    var originalFramebuffer = passState.framebuffer
+    passState.framebuffer = targetFramebuffer
 
     // reset frustum
-    frustum.near = index !== 0 ? frustumCommands.near * scene.opaqueFrustumNearOffset : frustumCommands.near;
-    frustum.far = frustumCommands.far;
-    us.updateFrustum(frustum);
+    frustum.near =
+      index !== 0 ? frustumCommands.near * scene.opaqueFrustumNearOffset : frustumCommands.near
+    frustum.far = frustumCommands.far
+    us.updateFrustum(frustum)
 
-    us.updatePass(Pass.GLOBE);
-    commands = frustumCommands.commands[Pass.GLOBE];
-    length = frustumCommands.indices[Pass.GLOBE];
+    us.updatePass(Pass.GLOBE)
+    commands = frustumCommands.commands[Pass.GLOBE]
+    length = frustumCommands.indices[Pass.GLOBE]
 
     if (globeTranslucent) {
       globeTranslucencyState.executeGlobeCommands(
@@ -111,11 +121,11 @@ export function executeDerivedCommandList(context, targetFramebuffer, passState,
         executeCommand,
         globeTranslucencyFramebuffer,
         scene,
-        passState,
-      );
+        passState
+      )
     } else {
       for (j = 0; j < length; ++j) {
-        executeCommand(commands[j], scene, context, passState);
+        executeCommand(commands[j], scene, context, passState)
       }
     }
 
@@ -129,28 +139,28 @@ export function executeDerivedCommandList(context, targetFramebuffer, passState,
     //     depthPlane.execute(context, passState);
     // }
 
-    us.updatePass(Pass.CESIUM_3D_TILE);
-    commands = frustumCommands.commands[Pass.CESIUM_3D_TILE];
-    length = frustumCommands.indices[Pass.CESIUM_3D_TILE];
+    us.updatePass(Pass.CESIUM_3D_TILE)
+    commands = frustumCommands.commands[Pass.CESIUM_3D_TILE]
+    length = frustumCommands.indices[Pass.CESIUM_3D_TILE]
     for (j = 0; j < length; ++j) {
-      executeCommand(commands[j], scene, context, passState);
+      executeCommand(commands[j], scene, context, passState)
     }
 
-    us.updatePass(Pass.OPAQUE);
-    commands = frustumCommands.commands[Pass.OPAQUE];
-    length = frustumCommands.indices[Pass.OPAQUE];
+    us.updatePass(Pass.OPAQUE)
+    commands = frustumCommands.commands[Pass.OPAQUE]
+    length = frustumCommands.indices[Pass.OPAQUE]
     for (j = 0; j < length; ++j) {
-      executeCommand(commands[j], scene, context, passState);
+      executeCommand(commands[j], scene, context, passState)
     }
 
-    us.updatePass(Pass.TRANSLUCENT);
-    commands = frustumCommands.commands[Pass.TRANSLUCENT];
-    length = frustumCommands.indices[Pass.TRANSLUCENT];
+    us.updatePass(Pass.TRANSLUCENT)
+    commands = frustumCommands.commands[Pass.TRANSLUCENT]
+    length = frustumCommands.indices[Pass.TRANSLUCENT]
     for (j = 0; j < length; ++j) {
-      executeCommand(commands[j], scene, context, passState);
+      executeCommand(commands[j], scene, context, passState)
     }
 
-    passState.framebuffer = originalFramebuffer;
+    passState.framebuffer = originalFramebuffer
   }
 }
 
@@ -206,7 +216,7 @@ float viewZToPerspectiveDepth( const in float viewZ, const in float near, const 
 float perspectiveDepthToViewZ( const in float invClipZ, const in float near, const in float far ) {
 	return ( near * far ) / ( ( far - near ) * invClipZ - far );
 }
-`;
+`
 
 const cmz_selected_glsl =
   'uniform sampler2D czm_selectedIdTexture; \n' +
@@ -225,7 +235,7 @@ const cmz_selected_glsl =
   '       if(float(i)>czm_selectedIdTextureWidth)break;\n' +
   '    } \n' +
   '    return false; \n' +
-  '} \n\n';
+  '} \n\n'
 
 /**
  *
@@ -254,9 +264,9 @@ export default function CesiumRenderPass(options) {
     PixelDatatype,
     PixelFormat,
     Framebuffer,
-  } = Cesium;
+  } = Cesium
 
-  this._selectedIdTexture = null;
+  this._selectedIdTexture = null
 
   let {
       name,
@@ -289,36 +299,36 @@ export default function CesiumRenderPass(options) {
       depth: 1,
     }),
     viewport = new BoundingRectangle(),
-    scope = this;
+    scope = this
 
   if (overrideViewport) {
-    BoundingRectangle.clone(overrideViewport, viewport);
+    BoundingRectangle.clone(overrideViewport, viewport)
   }
-  shaderRedefine = shaderRedefine || 'add';
-  renderType = renderType || 'all';
-  textureScale = textureScale || 1;
+  shaderRedefine = shaderRedefine || 'add'
+  renderType = renderType || 'all'
+  textureScale = textureScale || 1
 
   if (textureScale < 0 || textureScale > 8) {
-    throw new Cesium.DeveloperError('CesiumRenderPass：textureScale必须大于0小于等于8');
+    throw new Cesium.DeveloperError('CesiumRenderPass：textureScale必须大于0小于等于8')
   }
 
   function getShaderProgram(context, shaderProgram, pickId, pickIdQualifier) {
-    var shader = context.shaderCache.getDerivedShaderProgram(shaderProgram, passName);
+    var shader = context.shaderCache.getDerivedShaderProgram(shaderProgram, passName)
     if (!defined(shader)) {
-      var attributeLocations = shaderProgram._attributeLocations;
-      var fs = shaderProgram.fragmentShaderSource;
-      var vs = shaderProgram.vertexShaderSource;
-      var vsStr = shaderProgram._vertexShaderText;
+      var attributeLocations = shaderProgram._attributeLocations
+      var fs = shaderProgram.fragmentShaderSource
+      var vs = shaderProgram.vertexShaderSource
+      var vsStr = shaderProgram._vertexShaderText
 
       //
 
-      var sources = fs.sources;
-      var length = sources.length;
+      var sources = fs.sources
+      var length = sources.length
 
-      let hasSelected = !!stage && getSelected();
+      let hasSelected = !!stage && getSelected()
 
-      var czm_selectedFS = cmz_selected_glsl;
-      var is3dtiles = /texture\s?\(\s?tile_pickTexture\s?,\s?tile_featureSt\s?\)/.test(pickId);
+      var czm_selectedFS = cmz_selected_glsl
+      var is3dtiles = /texture\s?\(\s?tile_pickTexture\s?,\s?tile_featureSt\s?\)/.test(pickId)
       if (pickIdQualifier == 'in' && !is3dtiles) {
         czm_selectedFS += `
 in float me_isSelected;
@@ -329,12 +339,12 @@ bool czm_selected(){
     }
     return isSelected;
 }
-    `;
+    `
       } else {
         czm_selectedFS += `
 bool czm_selected(){ 
     return czm_selected(${pickId}); 
-}`;
+}`
       }
 
       let czm_selectedVS =
@@ -344,22 +354,22 @@ out float me_isSelected;
 bool czm_selected(){
     return czm_selected(${pickId});
 }
-`;
+`
 
       var hasNormal = false,
-        hasVNormal = false;
+        hasVNormal = false
       if (/attribute\s?vec3\s?normal\s?;/.test(vsStr) || /\n\s?vec3\s?normal\s?;/.test(vsStr)) {
-        hasNormal = true;
+        hasNormal = true
       } else if (/in\s?vec3\s?v_normal\s?;/.test(vsStr)) {
-        hasVNormal = true;
+        hasVNormal = true
       }
 
       if (fragmentShader) {
-        var hasPacking = false;
+        var hasPacking = false
         for (i = 0; i < length; ++i) {
           if (/vec4\s?packDepthToRGBA\s?\(/.test(sources[i])) {
-            hasPacking = true;
-            break;
+            hasPacking = true
+            break
           }
         }
 
@@ -371,44 +381,44 @@ bool czm_selected(){
           '{ \n' +
           (shaderRedefine != 'replace' ? `    ${nonMainName}(); \n` : '') +
           `    ${mainName}(); \n` +
-          '} \n';
-        var newSources = new Array(length + 1);
+          '} \n'
+        var newSources = new Array(length + 1)
         for (var i = 0; i < length; ++i) {
-          newSources[i] = ShaderSource.replaceMain(sources[i], nonMainName);
+          newSources[i] = ShaderSource.replaceMain(sources[i], nonMainName)
         }
-        newSources[length] = newMain;
+        newSources[length] = newMain
 
         if (hasNormal) {
-          fs.defines.push('HAS_NORMAL');
+          fs.defines.push('HAS_NORMAL')
         } else if (hasVNormal) {
-          fs.defines.push('HAS_V_NORMAL');
+          fs.defines.push('HAS_V_NORMAL')
         }
 
         fs = new ShaderSource({
           sources: newSources,
           defines: fs.defines,
-        });
+        })
       }
 
       //
       if (vertexShader || fragmentShader) {
-        sources = vs.sources;
-        length = sources.length;
+        sources = vs.sources
+        length = sources.length
 
-        var hasPacking = false;
+        var hasPacking = false
         for (i = 0; i < length; ++i) {
           if (/vec4\s?packDepthToRGBA\s?\(/.test(sources[i])) {
-            hasPacking = true;
-            break;
+            hasPacking = true
+            break
           }
         }
 
-        hasSelected = hasSelected && pickIdQualifier == 'in' && !is3dtiles;
+        hasSelected = hasSelected && pickIdQualifier == 'in' && !is3dtiles
 
         if (hasNormal) {
-          vs.defines.push('HAS_NORMAL');
+          vs.defines.push('HAS_NORMAL')
         } else if (hasVNormal) {
-          vs.defines.push('HAS_V_NORMAL');
+          vs.defines.push('HAS_V_NORMAL')
         }
 
         let newMain =
@@ -420,144 +430,149 @@ bool czm_selected(){
           (shaderRedefine != 'replace' ? `    ${nonMainName}(); \n` : '') +
           (hasSelected ? '    me_isSelected=czm_selected()?1.:0.;\n' : '') +
           `    ${mainName}(); \n` +
-          '} \n';
+          '} \n'
 
-        var newSources = new Array(length + 1);
+        var newSources = new Array(length + 1)
         for (var i = 0; i < length; ++i) {
-          newSources[i] = ShaderSource.replaceMain(sources[i], nonMainName);
+          newSources[i] = ShaderSource.replaceMain(sources[i], nonMainName)
         }
-        newSources[length] = newMain;
+        newSources[length] = newMain
 
         vs = new ShaderSource({
           sources: newSources,
           defines: vs.defines,
-        });
+        })
       }
 
       shader = context.shaderCache.createDerivedShaderProgram(shaderProgram, passName, {
         vertexShaderSource: vs,
         fragmentShaderSource: fs,
         attributeLocations: attributeLocations,
-      });
+      })
     }
 
-    return shader;
+    return shader
   }
   function getRenderState(scene, renderState) {
-    scene._renderPassCache = scene._renderPassCache || {};
-    scene._renderPassCache[rsCacheName] = scene._renderPassCache[rsCacheName] || {};
+    scene._renderPassCache = scene._renderPassCache || {}
+    scene._renderPassCache[rsCacheName] = scene._renderPassCache[rsCacheName] || {}
 
-    var cache = scene._renderPassCache[rsCacheName];
-    var cacheRenderState = cache[renderState.id];
+    var cache = scene._renderPassCache[rsCacheName]
+    var cacheRenderState = cache[renderState.id]
     if (!defined(cacheRenderState)) {
-      var rs = RenderState.getState(renderState);
+      var rs = RenderState.getState(renderState)
       if (typeof renderStateProcess == 'function') {
-        renderStateProcess.call(scope, rs);
+        renderStateProcess.call(scope, rs)
       }
-      cacheRenderState = RenderState.fromCache(rs);
-      cache[renderState.id] = cacheRenderState;
+      cacheRenderState = RenderState.fromCache(rs)
+      cache[renderState.id] = cacheRenderState
     }
 
-    return cacheRenderState;
+    return cacheRenderState
   }
   function createDerivedCommand(command, scene, context) {
-    let originalCommand = command;
-    var frameState = scene._frameState;
-    var derivedCommands = command.derivedCommands;
+    let originalCommand = command
+    var frameState = scene._frameState
+    var derivedCommands = command.derivedCommands
     if (!defined(derivedCommands)) {
-      return;
+      return
     }
 
     if (frameState.useLogDepth && defined(derivedCommands.logDepth)) {
-      command = derivedCommands.logDepth.command;
+      command = derivedCommands.logDepth.command
     }
 
-    derivedCommands = command.derivedCommands;
-    let result = derivedCommands.renderPass;
+    derivedCommands = command.derivedCommands
+    let result = derivedCommands.renderPass
     if (!defined(derivedCommands.renderPass)) {
-      result = derivedCommands.renderPass = {};
+      result = derivedCommands.renderPass = {}
     }
 
-    var shader;
-    var renderState;
+    var shader
+    var renderState
     if (defined(result[commandName])) {
-      shader = result[commandName].shaderProgram;
-      renderState = result[commandName].renderState;
+      shader = result[commandName].shaderProgram
+      renderState = result[commandName].renderState
     }
 
-    result[commandName] = DrawCommand.shallowClone(command, result[commandName]);
+    result[commandName] = DrawCommand.shallowClone(command, result[commandName])
 
     if (!defined(shader) || result.shaderProgramId !== command.shaderProgram.id) {
-      let originalSp = command.shaderProgram;
+      let originalSp = command.shaderProgram
       let pickIdQualifier = (originalCommand._pickIdQualifier = new RegExp(
         `uniform\\s?vec4\\s?${command.pickId}`,
-        'g',
+        'g'
       ).test(originalSp._fragmentShaderText)
         ? 'uniform'
-        : 'in');
+        : 'in')
 
-      result[commandName].shaderProgram = getShaderProgram(context, originalSp, command.pickId, pickIdQualifier);
-      result[commandName].renderState = getRenderState(scene, command.renderState);
-      result.shaderProgramId = command.shaderProgram.id;
+      result[commandName].shaderProgram = getShaderProgram(
+        context,
+        originalSp,
+        command.pickId,
+        pickIdQualifier
+      )
+      result[commandName].renderState = getRenderState(scene, command.renderState)
+      result.shaderProgramId = command.shaderProgram.id
     } else {
-      result[commandName].shaderProgram = shader;
-      result[commandName].renderState = renderState;
+      result[commandName].shaderProgram = shader
+      result[commandName].renderState = renderState
     }
 
     //uniformMap
-    var uniformMap = result[commandName].uniformMap;
-    updateUniformMap(uniformMap);
+    var uniformMap = result[commandName].uniformMap
+    updateUniformMap(uniformMap)
   }
   function getUniformMapFunction(name) {
     return function () {
-      var value = uniforms[name];
+      var value = uniforms[name]
       if (typeof value === 'function') {
-        return value();
+        return value()
       }
-      return value;
-    };
+      return value
+    }
   }
   function getUniformMapDimensionsFunction(uniformMap, name) {
     return function () {
-      var texture = uniformMap[name]();
+      var texture = uniformMap[name]()
       if (defined(texture)) {
-        return texture.dimensions;
+        return texture.dimensions
       }
-      return undefined;
-    };
+      return undefined
+    }
   }
 
   function updateUniformMap(uniformMap) {
     if (uniformMap.__created) {
-      return;
+      return
     }
 
     uniformMap.czm_selectedIdTexture = function () {
-      return stage._selectedIdTexture;
-    };
+      return stage._selectedIdTexture
+    }
 
     uniformMap.czm_selectedIdTextureWidth = function () {
-      return stage._selectedIdTexture ? stage._selectedIdTexture.width : 0;
-    };
+      return stage._selectedIdTexture ? stage._selectedIdTexture.width : 0
+    }
 
     uniformMap.czm_selectedIdTextureStep = function () {
-      return stage._selectedIdTexture ? 1.0 / stage._selectedIdTexture.width : -1;
-    };
+      return stage._selectedIdTexture ? 1.0 / stage._selectedIdTexture.width : -1
+    }
 
     if (!uniforms) {
-      return;
+      return
     }
-    uniformMap.__created = true;
+    uniformMap.__created = true
 
     for (var name in uniforms) {
       if (uniforms.hasOwnProperty(name)) {
         if (typeof uniforms[name] !== 'function') {
-          uniformMap[name] = getUniformMapFunction(name);
+          uniformMap[name] = getUniformMapFunction(name)
         } else {
-          uniformMap[name] = uniforms[name];
+          uniformMap[name] = uniforms[name]
         }
 
-        var value = uniformMap[name]();
+        var value = uniformMap[name]()
         if (
           typeof value === 'string' ||
           value instanceof Texture ||
@@ -565,7 +580,7 @@ bool czm_selected(){
           value instanceof HTMLCanvasElement ||
           value instanceof HTMLVideoElement
         ) {
-          uniformMap[name + 'Dimensions'] = getUniformMapDimensionsFunction(uniformMap, name);
+          uniformMap[name + 'Dimensions'] = getUniformMapDimensionsFunction(uniformMap, name)
         }
       }
     }
@@ -574,59 +589,64 @@ bool czm_selected(){
   function udpateDerivedCommands(scene) {
     let view = scene._view,
       frustumCommandsList = view.frustumCommandsList,
-      numFrustums = frustumCommandsList.length;
+      numFrustums = frustumCommandsList.length
 
-    var j, pass, length;
+    var j, pass, length
     for (var i = 0; i < numFrustums; ++i) {
-      var index = numFrustums - i - 1;
-      var frustumCommands = frustumCommandsList[index];
+      var index = numFrustums - i - 1
+      var frustumCommands = frustumCommandsList[index]
 
       for (pass = 0; pass < frustumCommands.commands.length; pass++) {
-        var commands = frustumCommands.commands[pass];
-        length = frustumCommands.indices[pass];
-        if (stage && pass == Pass.GLOBE) continue;
+        var commands = frustumCommands.commands[pass]
+        length = frustumCommands.indices[pass]
+        if (stage && pass == Pass.GLOBE) continue
 
         for (j = 0; j < length; ++j) {
           /**
            * @type {Cesium.DrawCommand}
            */
-          var command = commands[j];
-          createDerivedCommand(command, scene, scene._context);
+          var command = commands[j]
+          createDerivedCommand(command, scene, scene._context)
         }
       }
     }
   }
   function releaseResources() {
     if (colorTexture) {
-      colorTexture.destroy();
-      framebuffer.destroy();
-      framebuffer = undefined;
-      colorTexture = undefined;
+      colorTexture.destroy()
+      framebuffer.destroy()
+      framebuffer = undefined
+      colorTexture = undefined
     }
     if (depthTexture) {
-      depthTexture.destroy();
-      depthTexture = undefined;
+      depthTexture.destroy()
+      depthTexture = undefined
     }
   }
   function updateFramebuffer(context, viewport, hdr, sceneFramebuffer) {
-    var width = viewport.width;
-    var height = viewport.height;
+    var width = viewport.width
+    var height = viewport.height
 
-    if (colorTexture && colorTexture.width === width && colorTexture.height === height && hdr === useHdr) {
-      return;
+    if (
+      colorTexture &&
+      colorTexture.width === width &&
+      colorTexture.height === height &&
+      hdr === useHdr
+    ) {
+      return
     }
-    useHdr = hdr;
+    useHdr = hdr
 
-    releaseResources();
+    releaseResources()
 
     colorTexture = new Texture({
       context: context,
       width: width,
       height: height,
-      pixelFormat: defaultValue(pixelFormat, PixelFormat.RGBA),
-      pixelDatatype: defaultValue(pixelDatatype, PixelDatatype.FLOAT),
-      sampler: defaultValue(sampler, Sampler.NEAREST),
-    });
+      pixelFormat: pixelFormat ?? PixelFormat.RGBA,
+      pixelDatatype: pixelDatatype ?? PixelDatatype.FLOAT,
+      sampler: sampler ?? Sampler.NEAREST,
+    })
     depthTexture = new Texture({
       context: context,
       width: width,
@@ -634,7 +654,7 @@ bool czm_selected(){
       pixelFormat: PixelFormat.DEPTH_COMPONENT,
       pixelDatatype: PixelDatatype.UNSIGNED_SHORT,
       sampler: Sampler.NEAREST,
-    });
+    })
 
     framebuffer = new Framebuffer({
       colorTextures: [colorTexture],
@@ -643,70 +663,70 @@ bool czm_selected(){
       depthTexture: depthTexture,
       // , depthStencilTexture: sceneFramebuffer._depthStencilTexture,
       // depthStencilRenderbuffer: sceneFramebuffer._depthStencilRenderbuffer
-    });
+    })
   }
 
   function getPassState(view) {
     if (!overrideViewport) {
-      viewport = BoundingRectangle.clone(view.viewport, viewport);
+      viewport = BoundingRectangle.clone(view.viewport, viewport)
       if (viewportScale) {
-        viewport.x = viewport.width * viewportScale.x;
-        viewport.y = viewport.height * viewportScale.y;
-        viewport.width *= viewportScale.width;
-        viewport.height *= viewportScale.height;
+        viewport.x = viewport.width * viewportScale.x
+        viewport.y = viewport.height * viewportScale.y
+        viewport.width *= viewportScale.width
+        viewport.height *= viewportScale.height
       } else {
-        viewport.width *= textureScale;
-        viewport.height *= textureScale;
+        viewport.width *= textureScale
+        viewport.height *= textureScale
       }
     }
 
-    let passState = Object.assign({}, view.passState);
-    passState.viewport = viewport;
-    return passState;
+    let passState = Object.assign({}, view.passState)
+    passState.viewport = viewport
+    return passState
   }
 
   function update(context, useLogDepth) {
     const frameState = context._us._frameState,
       camera = frameState.camera,
       scene = camera._scene,
-      view = scene._view;
+      view = scene._view
 
     try {
       if (!vertexShader && !fragmentShader) {
-        let passState = getPassState(view);
+        let passState = getPassState(view)
         if (typeof beforeUpdate == 'function') {
-          beforeUpdate.call(scope, scene, useLogDepth);
+          beforeUpdate.call(scope, scene, useLogDepth)
         }
-        updateFramebuffer(context, viewport, scene.hdr, view.sceneFramebuffer);
-        executeDerivedCommandList(context, framebuffer, passState);
+        updateFramebuffer(context, viewport, scene.hdr, view.sceneFramebuffer)
+        executeDerivedCommandList(context, framebuffer, passState)
       }
       //   if (stage && stage._selectedIdTexture)
       else {
-        let passState = getPassState(view);
+        let passState = getPassState(view)
         if (typeof beforeUpdate == 'function') {
-          beforeUpdate.call(scope, scene, useLogDepth);
+          beforeUpdate.call(scope, scene, useLogDepth)
         }
-        updateFramebuffer(context, viewport, scene.hdr, view.sceneFramebuffer);
-        udpateDerivedCommands(scene);
+        updateFramebuffer(context, viewport, scene.hdr, view.sceneFramebuffer)
+        udpateDerivedCommands(scene)
         executeDerivedCommandList(
           context,
           framebuffer,
           passState,
           'renderPass',
           commandName,
-          renderType == 'all' || !stage || !stage._selectedIdTexture ? null : commandFilter,
-        );
+          renderType == 'all' || !stage || !stage._selectedIdTexture ? null : commandFilter
+        )
       }
     } catch (err) {
-      console.error(err);
+      console.error(err)
     }
   }
 
   function getSelected() {
-    if (!stage) return;
-    let selectedFeatures = stage.selected || stage.parentSelected;
+    if (!stage) return
+    let selectedFeatures = stage.selected || stage.parentSelected
     if (selectedFeatures.length) {
-      return selectedFeatures;
+      return selectedFeatures
     }
   }
 
@@ -717,106 +737,106 @@ bool czm_selected(){
    * @private
    */
   function commandFilter(command, scene) {
-    let selectedFeatures = stage && (stage.selected || stage.parentSelected);
+    let selectedFeatures = stage && (stage.selected || stage.parentSelected)
 
-    if (!stage || !selectedFeatures || !selectedFeatures.length) return false;
-    if (!command.pickId || command._pickIdQualifier != 'uniform') return true;
+    if (!stage || !selectedFeatures || !selectedFeatures.length) return false
+    if (!command.pickId || command._pickIdQualifier != 'uniform') return true
 
     let show = true,
-      owner = command.owner;
+      owner = command.owner
 
-    let renderSelected = renderType == 'selected';
+    let renderSelected = renderType == 'selected'
 
     if (owner && owner.isObject3D) {
       for (let i = 0; i < selectedFeatures.length; i++) {
-        const feature = selectedFeatures[i];
-        if (feature == owner) return renderSelected;
+        const feature = selectedFeatures[i]
+        if (feature == owner) return renderSelected
       }
-      return !renderSelected;
+      return !renderSelected
     }
 
-    let uniformMap = command.uniformMap;
+    let uniformMap = command.uniformMap
     if (uniformMap[command.pickId]) {
-      let id = uniformMap[command.pickId]();
+      let id = uniformMap[command.pickId]()
 
-      show = !renderSelected;
+      show = !renderSelected
       for (let i = 0; i < selectedFeatures.length; i++) {
-        const feature = selectedFeatures[i];
-        let pickIds = feature.pickId ? [feature.pickId] : feature.pickIds || feature._pickIds;
+        const feature = selectedFeatures[i]
+        let pickIds = feature.pickId ? [feature.pickId] : feature.pickIds || feature._pickIds
         for (let j = 0; j < pickIds.length; j++) {
-          const pickId = pickIds[j];
+          const pickId = pickIds[j]
           if (pickId.color == id || Color.equals(pickId.color, id)) {
-            return renderSelected;
+            return renderSelected
           }
         }
       }
     }
 
-    return show;
+    return show
   }
 
   function clear(context) {
     if (framebuffer) {
-      var view = context._us._frameState.camera._scene._view;
-      clearCommand.framebuffer = framebuffer;
-      clearCommand.execute(context, view.passState);
-      clearCommand.framebuffer = undefined;
+      var view = context._us._frameState.camera._scene._view
+      clearCommand.framebuffer = framebuffer
+      clearCommand.execute(context, view.passState)
+      clearCommand.framebuffer = undefined
     }
   }
 
   function bindStage(pStage) {
     if (stage && scope.prevStageUpdate) {
-      stage.update = scope.prevStageUpdate;
-      scope.prevStageUpdate = null;
-      scope.prevStageExecute = null;
+      stage.update = scope.prevStageUpdate
+      scope.prevStageUpdate = null
+      scope.prevStageExecute = null
     }
 
-    stage = pStage;
-    if (!stage) return;
+    stage = pStage
+    if (!stage) return
 
-    let oldUpdate = stage.update;
-    scope.prevStageUpdate = oldUpdate;
+    let oldUpdate = stage.update
+    scope.prevStageUpdate = oldUpdate
 
     stage.update = function (context, useLogDepth) {
-      clear(context);
-      oldUpdate.call(stage, context, useLogDepth);
+      clear(context)
+      oldUpdate.call(stage, context, useLogDepth)
 
-      if (!stage.enabled) return;
+      if (!stage.enabled) return
 
       if (!vertexShader && !fragmentShader) {
-        update(context, useLogDepth);
+        update(context, useLogDepth)
       } else {
-        let selectedFeatures = stage.selected || stage.parentSelected;
+        let selectedFeatures = stage.selected || stage.parentSelected
         if (selectedFeatures && selectedFeatures.length) {
-          update(context, useLogDepth);
+          update(context, useLogDepth)
         }
       }
-    };
+    }
   }
 
-  this.update = update;
-  this.clear = clear;
+  this.update = update
+  this.clear = clear
 
   Object.defineProperties(this, {
     texture: {
       get() {
-        return colorTexture;
+        return colorTexture
       },
     },
     depthTexture: {
       get() {
-        return depthTexture;
+        return depthTexture
       },
     },
     stage: {
       get() {
-        return stage;
+        return stage
       },
       set(val) {
         if (stage != val) {
-          bindStage(val);
+          bindStage(val)
         }
       },
     },
-  });
+  })
 }

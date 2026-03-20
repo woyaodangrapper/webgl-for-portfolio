@@ -5,6 +5,10 @@ import fragmentUndulateShader from './shaders/undulate.frag.glsl'
 
 import vertexUndulateViewShader from './shaders/undulate.view.vert.glsl'
 import fragmentUndulateViewShader from './shaders/undulate.view.frag.glsl'
+
+import vertexFrictionShader from './shaders/friction.vert.glsl'
+import fragmentFrictionShader from './shaders/friction.frag.glsl'
+
 import { createEdgeProcess, createStageLibrary, PostProcessStageManager } from './process/edgePost'
 import {
   Viewer,
@@ -31,7 +35,9 @@ const uniforms = {
     value: 0.7,
   },
 }
-
+const frictionUniforms = {
+  uTime: { value: 0.0 },
+}
 const undulateUniforms = {
   u_time: {
     type: UniformType.FLOAT,
@@ -139,5 +145,18 @@ export const undulateMaterialShader = (uniforms: Record<string, { value: any }>)
     { ...undulateUniforms, ...uniforms },
     vertexUndulateViewShader,
     fragmentUndulateViewShader
+  )
+}
+
+/**
+ * 创建一个半透明波动效果，用于模型的自定义渲染
+ * @returns 自定义着色器实例
+ */
+export const frictionMaterialShader = (uniforms: Record<string, { value: any }>, options?: {}) => {
+  return createMaterialShader(
+    { ...frictionUniforms, ...uniforms },
+    vertexFrictionShader,
+    fragmentFrictionShader,
+    options
   )
 }

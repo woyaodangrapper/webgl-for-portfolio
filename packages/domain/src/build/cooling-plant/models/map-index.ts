@@ -6,6 +6,7 @@ import {
   applyDefaultShadowSettings,
   JulianDate,
   smoothFlyTo,
+  Color,
 } from '@my/gl/gis'
 
 import {
@@ -22,16 +23,16 @@ import { createBestViewingPoint } from '../controls'
  * @returns {Promise<Model[]>} 返回加载的模型数组
  */
 export async function loadDefaultTilesetAsync(viewer: Viewer): Promise<Model[]> {
-  const modelUrls = ['aaa', 'bbb', 'ccc', 'ddd'] //
+  const modelUrls = ['aaa', 'bbb', 'ccc', 'ddd'] //, 'ccc', 'ddd'
   let models = await cacheModels(
-    modelUrls.map((name) => `https://webgl.crcr.top/.models/SpaceX/${name}.glb`)
+    modelUrls.map((name) => `https://webgl.crcr.top/.models/SpaceX/${name}.glb`),
+    2
   )
 
   {
     // 为最后一个模型添加自定义着色器
     const lastModel = models.slice(-1)[0]
     lastModel.customShader = translucentShader
-    lastModel.show = false
   }
   {
     const lastModel = models.slice(-2)[0]
@@ -41,7 +42,7 @@ export async function loadDefaultTilesetAsync(viewer: Viewer): Promise<Model[]> 
     // 设置模型的PBR光照
     viewer.scene.light.intensity = 2.0
     createModelLighting(
-      models.slice(0, 5),
+      models,
       'https://webgl.crcr.top/.models/light/kiara_6_afternoon_2k_ibl.ktx2' // 使用默认的IBL贴图(亮一点适合管道模型)
     )
   }
@@ -57,15 +58,14 @@ export async function loadDefaultTilesetAsync(viewer: Viewer): Promise<Model[]> 
 
   {
     // 为前四个模型添加波纹效果着色器
-    models.slice(0, 4).forEach((model: any) => {
-      model.customShader = undulateShader
-    })
+    // models.slice(1, 2).forEach((model: any) => {
+    //   model.customShader = undulateShader
+    // })
     eventListener(viewer)
   }
 
   {
     // viewer.scene.sun.show = true
-    viewer.scene.highDynamicRange = true
     viewer.scene.postProcessStages.exposure = 0.7
   }
 
@@ -75,11 +75,10 @@ export async function loadDefaultTilesetAsync(viewer: Viewer): Promise<Model[]> 
     const beijingTime = new Date('2025-03-14T14:52:00+08:00')
     const julianDate = JulianDate.fromDate(beijingTime)
     viewer.clock.currentTime = julianDate
-    viewer.clock.shouldAnimate = false
   }
   return await createModels(viewer, models).then((models) => {
     setTimeout(() => {
-      createEdgeStageShader(viewer, models.slice(0, 4), true)
+      createEdgeStageShader(viewer, models, true)
       console.log('Edge stage shader created')
     }, 2000)
     return models

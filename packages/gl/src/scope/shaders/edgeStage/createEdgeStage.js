@@ -258,10 +258,11 @@ export function createEdgeStage(name) {
                 vec4 edgeValue1 = TEXTURE2D(edgeTexture1, vUv);
                 vec4 edgeValue2 = TEXTURE2D(edgeTexture2, vUv);
                 vec4 glowColor = edgeValue1 + edgeValue2 * edgeGlow;
-                out_FragColor = opacity * color + edgeColor + edgeStrength * (1. - edgeColor.r) * glowColor;
+                vec3 result = (opacity * color + edgeColor + edgeStrength * (1. - edgeColor.r) * glowColor).rgb;
+                out_FragColor = vec4(result, color.a);
             }
             else{
-                out_FragColor = opacity * color + edgeColor;
+                out_FragColor = vec4((opacity * color + edgeColor).rgb, color.a);
             }
         }
         `,

@@ -28,7 +28,7 @@ function create3D(container: Element, { theme, onLoaded }: Props) {
 
   // eslint-disable-next-line max-len
   Ion.defaultAccessToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiNGZiOTc1NS0zZmZlLTQ4MzUtODFlMS00ZDI2NWE5YTFkZjIiLCJpZCI6MTgwMDUsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1NzMxMTcwODd9.WPytI-wsAoBmC7NLmz01l0GcYoh3bvTES7z1yZQgGMM'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMzVlNTU2ZC1lYmM1LTQ2OWEtODRhOS0wYTFkODZmZTQ0OTgiLCJpZCI6MjU5LCJpYXQiOjE3NzI0ODIxOTR9.1oVHvVA9yr1C3CbLjlzcQQUyBuUuNaNCcc9_Giy8t7U'
   const options: ViewerOptions = {
     enableDebugMode: true,
     geocoder: false, // 地理编码器
@@ -86,6 +86,10 @@ function create3D(container: Element, { theme, onLoaded }: Props) {
 
   viewer = new Viewer(container, {
     ...options,
+    animation: false,
+    timeline: false,
+    geocoder: false,
+    skyBox: false,
     orderIndependentTranslucency: false,
     contextOptions: {
       requestWebgl1: false,
@@ -283,25 +287,25 @@ function setupViewerOptions(options: SetupOptions = {}) {
 function enableSphereStyleEnhancements(
   theme: 'light' | 'dark' | 'system' | null | undefined = 'system'
 ) {
-  viewer.scene.highDynamicRange = true
-  viewer.scene.moon.show = false
-  viewer.scene.skyBox.show = false
-
-  viewer.scene.backgroundColor = Color.TRANSPARENT
-  viewer.scene.sun.show = false
+  viewer.scene.highDynamicRange = false
+  // viewer.scene.moon.show = false
+  // viewer.scene.skyBox.show = false
+  // viewer.scene.sun.show = false
   viewer.scene.globe.enableLighting = false
   viewer.scene.skyAtmosphere.show = false
-  viewer.scene.sun.show = false
+  viewer.scene.globe.showGroundAtmosphere = false
   viewer.scene.globe.show = false
-  if (theme === 'system') {
-    const root = document.documentElement
-    const bgColor = getComputedStyle(root).getPropertyValue('--background').trim()
-    viewer.scene.globe.baseColor = Color.fromCssColorString(bgColor)
-    viewer.scene.backgroundColor = Color.fromCssColorString(bgColor)
-  } else {
-    viewer.scene.globe.baseColor = theme === 'dark' ? Color.BLACK : Color.WHITE
-    viewer.scene.backgroundColor = theme === 'dark' ? Color.BLACK : Color.WHITE
-  }
+  viewer.scene.backgroundColor = Color.TRANSPARENT
+
+  // if (theme === 'system') {
+  //   const root = document.documentElement
+  //   const bgColor = getComputedStyle(root).getPropertyValue('--background').trim()
+  //   viewer.scene.globe.baseColor = Color.fromCssColorString(bgColor)
+  //   viewer.scene.backgroundColor = Color.fromCssColorString(bgColor)
+  // } else {
+  //   viewer.scene.globe.baseColor = theme === 'dark' ? Color.BLACK : Color.WHITE
+  //   viewer.scene.backgroundColor = theme === 'dark' ? Color.BLACK : Color.WHITE
+  // }
 }
 export type Props = {
   theme?: 'light' | 'dark' | 'system' | null | undefined

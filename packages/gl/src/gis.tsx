@@ -11,5 +11,5 @@ export * from './utils/entitieUtils'
 export * from './utils/lightingUtils'
 export * from './utils/retrieveUtils'
 
-export { Color } from 'cesium'
+export { Color,Cesium3DTileset ,Cartesian3,Math } from 'cesium'
 // export * from './components/scene3d'

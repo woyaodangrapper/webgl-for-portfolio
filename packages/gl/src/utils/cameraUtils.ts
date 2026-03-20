@@ -85,17 +85,12 @@ export function zoomToModel(viewer: Cesium.Viewer, model: Cesium.Model) {
   ;(controller as any)._minimumRotateRate = 1.0
 
   let { radius } = model.boundingSphere
-  if (radius < 10.0) {
-    // ScreenSpaceCameraController doesn't handle small models well
-    const scale = 10.0 / radius
-    Cesium.Matrix4.multiplyByUniformScale(model.modelMatrix, scale, model.modelMatrix)
-    radius *= scale
-  }
+  const effectiveRadius = radius < 10.0 ? 10.0 : radius
 
   const heading = 3.14
   const pitch = -0.76
   viewer.camera.lookAt(
     model.boundingSphere.center,
-    new Cesium.HeadingPitchRange(heading, pitch, radius * 3.0)
+    new Cesium.HeadingPitchRange(heading, pitch, effectiveRadius * 3.0)
   )
 }
