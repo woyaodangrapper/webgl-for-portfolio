@@ -80,7 +80,18 @@ export const TableOfContents = ({
     []
   )
   const [containerHeight, setContainerHeight] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // 监听窗口大小检测设备
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // 测量容器和项目位置
   useEffect(() => {
@@ -116,76 +127,81 @@ export const TableOfContents = ({
 
   return (
     <>
-      <aside
-        style={{
-          position: 'fixed',
-          right: 20,
-          top: 35,
-          width: 240,
-          maxHeight: 'calc(100vh - 100px)',
-          overflowY: 'auto',
-          padding: '16px',
-          background: '#fff',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
-      >
-        <h4
+      {!isMobile && (
+        <aside
           style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            marginBottom: '12px',
-            color: '#333',
+            position: 'fixed',
+            right: 20,
+            top: 35,
+            width: 240,
+            maxHeight: 'calc(100vh - 100px)',
+            overflowY: 'auto',
+            padding: '16px',
+            background: '#fff',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           }}
         >
-          Contents
-        </h4>
-        <div ref={containerRef} style={{ position: 'relative', paddingLeft: 24, marginBottom: 24 }}>
-          <NavLineIndicator
-            items={itemData}
-            activeIndex={activeIndex}
-            totalHeight={containerHeight}
-          />
-          {headings.map(({ id, title, level }, index) => (
-            <div
-              key={`${id}-${index}`}
-              data-nav-item
-              style={{
-                paddingLeft: Math.max(0, level - 2) * 12,
-                paddingTop: 4,
-                paddingBottom: 4,
-              }}
-            >
-              <a
-                href={`#${id}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setActiveIndex(index)
-                  const el = document.getElementById(id)
-                  if (el) el.scrollIntoView({ behavior: 'smooth' })
-                }}
+          <h4
+            style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              color: '#333',
+            }}
+          >
+            Contents
+          </h4>
+          <div
+            ref={containerRef}
+            style={{ position: 'relative', paddingLeft: 24, marginBottom: 24 }}
+          >
+            <NavLineIndicator
+              items={itemData}
+              activeIndex={activeIndex}
+              totalHeight={containerHeight}
+            />
+            {headings.map(({ id, title, level }, index) => (
+              <div
+                key={`${id}-${index}`}
+                data-nav-item
                 style={{
-                  textDecoration: 'none',
-                  fontSize: level === 2 ? '14px' : '13px',
-                  color: index === activeIndex ? '#0066ff' : level === 2 ? '#555' : '#777',
-                  fontWeight: level === 2 ? '500' : '400',
-                  cursor: 'pointer',
-                  transition: 'color 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#0066ff'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color =
-                    index === activeIndex ? '#0066ff' : level === 2 ? '#555' : '#777'
+                  paddingLeft: Math.max(0, level - 2) * 12,
+                  paddingTop: 4,
+                  paddingBottom: 4,
                 }}
               >
-                {title}
-              </a>
-            </div>
-          ))}
-        </div>
-      </aside>
+                <a
+                  href={`#${id}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setActiveIndex(index)
+                    const el = document.getElementById(id)
+                    if (el) el.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  style={{
+                    textDecoration: 'none',
+                    fontSize: level === 2 ? '14px' : '13px',
+                    color: index === activeIndex ? '#0066ff' : level === 2 ? '#555' : '#777',
+                    fontWeight: level === 2 ? '500' : '400',
+                    cursor: 'pointer',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#0066ff'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color =
+                      index === activeIndex ? '#0066ff' : level === 2 ? '#555' : '#777'
+                  }}
+                >
+                  {title}
+                </a>
+              </div>
+            ))}
+          </div>
+        </aside>
+      )}
 
       {/* 按钮区域 - 悬浮在 aside 下方 */}
       <div

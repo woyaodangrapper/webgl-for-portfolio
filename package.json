@@ -44,6 +44,7 @@
     "@tamagui/react-native-web-lite": "2.0.0-rc.16",
     "check-dependency-version-consistency": "^4.1.0",
     "expo": "^54",
+    "gsap": "^3.14.2",
     "husky": "^9.1.6",
     "turbo": "^1.13.4",
     "typescript": "~5.8.3",

@@ -11276,6 +11276,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"gsap@npm:^3.14.2":
+  version: 3.14.2
+  resolution: "gsap@npm:3.14.2"
+  checksum: 10/6c6473b6f4d7bf07667fc5a0fb75556e7b55f7a12a028da22050f64d530ef8b4fa68499b040bdc559a21b15fa5cce04b55c0381059a3023ef4b6c540734c8139
+  languageName: node
+  linkType: hard
+
 "has-flag@npm:^3.0.0":
   version: 3.0.0
   resolution: "has-flag@npm:3.0.0"
@@ -15909,6 +15916,7 @@ __metadata:
     "@tamagui/react-native-web-lite": "npm:2.0.0-rc.16"
     check-dependency-version-consistency: "npm:^4.1.0"
     expo: "npm:^54"
+    gsap: "npm:^3.14.2"
     husky: "npm:^9.1.6"
     turbo: "npm:^1.13.4"
     typescript: "npm:~5.8.3"

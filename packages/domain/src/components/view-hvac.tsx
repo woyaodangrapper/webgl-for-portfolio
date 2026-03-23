@@ -24,6 +24,7 @@ import {
   OutlineEffect,
   BehaviorSubject,
   Effect,
+  useScanEffect,
 } from '@my/gl/3ds'
 import { AdditiveBlending, Color, Context, FrontSide, Vector3 } from '@my/gl/types'
 
@@ -89,6 +90,14 @@ export const HvacModels: React.FC<HvacModelsProps> = ({ viewer, onProgress }): R
       useEffects(viewer, models).then((d) => {
         dispose = d
       })
+
+      setTimeout(() => {
+        useScanEffect(viewer, models, {
+          color: 0xff7700,
+          loop: true,
+          delay: 6,
+        })
+      }, 2000)
     }
     return () => {
       dispose?.()

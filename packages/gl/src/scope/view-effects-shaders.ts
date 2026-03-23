@@ -26,8 +26,16 @@ import {
   PointLight,
   SpotLight,
   Color,
+  BoxGeometry,
+  Plane,
+  AdditiveBlending,
+  Box3,
+  Group,
 } from 'three'
 import { EXRLoader, RGBELoader } from 'three-stdlib'
+import { Context } from '../types'
+import gsap from 'gsap'
+
 type MaterialFunction = (material: MeshStandardMaterial) => ShaderMaterial | undefined
 
 type LoaderType = typeof RGBELoader | typeof EXRLoader
@@ -424,5 +432,192 @@ export function extractMeshes(objects: Object3D[]): Mesh[] {
 /// 获取 EffectComposer 中选中的 Mesh
 export function getSelectedMeshes(effects: OutlineEffect): Mesh[] {
   const objects = Array.from(effects.selection.values())
-  return extractMeshes(objects)
+  return extractMeshes(objects as Object3D[])
+}
+
+/**
+ * 对一个或多个模型应用「线框扫描 → 实体填充」特效。
+ * 若传入多个模型，包围盒与裁切参数合并计算，扫描线为共用单次，不各自为战。
+ *
+ * @param viewer  Three.js 场景上下文（需含 scene 与 renderer）
+ * @param models  单个或多个 Object3D 模型
+ * @param options 可选配置项
+ * @returns 包含 GSAP timeline 与 dispose 清理函数的对象
+ */
+export function useScanEffect(
+  viewer: Context | Partial<Context>,
+  models: Object3D | Object3D[],
+  options: {
+    /** 扫描线与线框颜色，默认 0x44ff44 */
+    color?: number
+    /** 是否循环播放，默认 true */
+    loop?: boolean
+    /** 首次播放延迟（秒），默认 1 */
+    delay?: number
+  } = {}
+): { timeline: gsap.core.Timeline; dispose: () => void } {
+  const { color = 0x44ff44, loop = true, delay = 1 } = options
+
+  if (!viewer.scene || !viewer.renderer) {
+    throw new Error('viewer.scene and viewer.renderer are required for useScanEffect')
+  }
+
+  const scene = viewer.scene
+  const renderer = viewer.renderer
+  renderer.localClippingEnabled = true
+
+  const modelArray = Array.isArray(models) ? models : [models]
+
+  // 合并所有模型的包围盒
+  const bbox = new Box3()
+  modelArray.forEach((m) => bbox.expandByObject(m))
+  const size = bbox.getSize(new Vector3())
+  const center = bbox.getCenter(new Vector3())
+  const minY = bbox.min.y
+  const maxY = bbox.max.y
+  const vMargin = size.y * 0.02
+  // 扫描终点：底部多延伸 15% 高度，让扫描线明显穿出底面
+  const bottomEnd = minY - size.y * 0.05
+
+  // 扫描平面（发光薄盒）
+  const scanGeo = new BoxGeometry(size.x * 1.1, Math.max(size.y * 0.006, 0.04), size.z * 1.1)
+  const scanMat = new MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.5,
+    blending: AdditiveBlending,
+    depthWrite: false,
+  })
+  const scanMesh = new Mesh(scanGeo, scanMat)
+  scanMesh.position.set(center.x, maxY + vMargin, center.z)
+  scanMesh.scale.set(0, 0, 1)
+  scene.add(scanMesh)
+
+  // 裁切面：实体填充（法线向上，constant 从 -(maxY+margin) 增大到 -(minY-margin)，顶层到底层逐步显现）
+  const fillPlane = new Plane(new Vector3(0, 1, 0), -(maxY + vMargin))
+  // 裁切面：线框可见窗口（下界 + 上界），围绕扫描位置形成一个可见带
+  const wireClipIn = new Plane(new Vector3(0, 1, 0), -(maxY + vMargin)) // 下界
+  const wireClipOut = new Plane(new Vector3(0, -1, 0), maxY + vMargin) // 上界
+
+  // 为所有模型的材质应用实体裁切面，并保存恢复函数
+  const matRestoreFns: Array<() => void> = []
+  modelArray.forEach((model) => {
+    model.traverse((child) => {
+      if (child instanceof Mesh) {
+        const mat = child.material as any
+        const prevPlanes = mat.clippingPlanes ?? null
+        const prevIntersection = mat.clipIntersection ?? false
+        mat.clippingPlanes = [fillPlane]
+        mat.clipIntersection = false
+        mat.needsUpdate = true
+        matRestoreFns.push(() => {
+          mat.clippingPlanes = prevPlanes
+          mat.clipIntersection = prevIntersection
+          mat.needsUpdate = true
+        })
+      }
+    })
+  })
+
+  // 为每个模型创建线框克隆，共用同一组裁切面
+  const wireGroup = new Group()
+  const wireMats: MeshBasicMaterial[] = []
+  modelArray.forEach((model) => {
+    const clone = model.clone()
+    clone.traverse((obj) => {
+      if (obj instanceof Mesh) {
+        const wm = new MeshBasicMaterial({
+          wireframe: true,
+          color,
+          transparent: true,
+          opacity: 0.2,
+          clippingPlanes: [wireClipIn, wireClipOut],
+          clipIntersection: false,
+          depthWrite: false,
+        })
+        wireMats.push(wm)
+        obj.material = wm
+      }
+    })
+    wireGroup.add(clone)
+  })
+  scene.add(wireGroup)
+
+  // 线框可见带半高（扫描线附近可见区域）
+  const bandR = size.y * 0.06
+
+  // —— GSAP 时间轴 ——
+  const tl = gsap.timeline({
+    repeat: loop ? -1 : 0,
+    delay: 1,
+    repeatDelay: delay,
+  })
+
+  // 每次循环开始时将实体填充面重置为完全隐藏（fromTo 无法覆盖跨阶段复用）
+  tl.set(fillPlane, { constant: -(maxY + vMargin) })
+
+  // —— 阶段一：线框扫描（扫描线从顶部向底部运动，线框带随扫描线移动） ——
+  const s1 = { pos: maxY + vMargin }
+
+  tl.fromTo(scanMesh.scale, { x: 0, y: 0 }, { x: 1, y: 1, duration: 0.5, ease: 'power3.inOut' })
+
+  tl.fromTo(
+    s1,
+    { pos: maxY + vMargin },
+    {
+      pos: bottomEnd,
+      duration: 2,
+      ease: 'power4.inOut',
+      onUpdate() {
+        scanMesh.position.y = s1.pos
+        wireClipIn.constant = -(s1.pos - bandR)
+        wireClipOut.constant = s1.pos + bandR
+      },
+    },
+    0 // 与扫描线出现同步开始
+  )
+
+  tl.to(scanMesh.scale, { x: 0, y: 0, duration: 0.5, ease: 'power3.inOut' }, '-=0.5')
+
+  // —— 阶段二：实体填充扫描（扫描线再次从顶部向底部，模型在扫描线上方逐步实体化） ——
+  tl.addLabel('fillIn', '+=1')
+
+  const s2 = { pos: maxY + vMargin }
+
+  tl.to(scanMesh.scale, { x: 1, y: 1, duration: 0.5, ease: 'power3.inOut' }, 'fillIn')
+
+  tl.fromTo(
+    s2,
+    { pos: maxY + vMargin },
+    {
+      pos: bottomEnd,
+      duration: 2,
+      ease: 'power3.inOut',
+      onUpdate() {
+        scanMesh.position.y = s2.pos
+        fillPlane.constant = -s2.pos
+        wireClipIn.constant = -(s2.pos - bandR)
+        wireClipOut.constant = s2.pos + bandR
+      },
+    },
+    'fillIn'
+  )
+
+  tl.to(scanMesh.scale, { x: 0, y: 0, duration: 0.5, ease: 'power3.inOut' }, '-=0.5')
+
+  // 确保动画结束时模型完整可见
+  tl.set(fillPlane, { constant: -bottomEnd })
+
+  // —— 销毁函数 ——
+  const dispose = () => {
+    tl.kill()
+    matRestoreFns.forEach((fn) => fn())
+    scene.remove(scanMesh)
+    scanGeo.dispose()
+    scanMat.dispose()
+    wireMats.forEach((m) => m.dispose())
+    scene.remove(wireGroup)
+  }
+
+  return { timeline: tl, dispose }
 }
